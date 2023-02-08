@@ -15,7 +15,7 @@ library(tidyverse)
 
 ```{r}
 getwd()
-setwd("~/Dropbox/ESTADISTICA/SIMPROSIST/clases_1477")
+setwd("~/Dropbox/ESTADISTICA/SIMPROSIST/clases_1477/sintaxis1477")
 ```
 
 1.  Borra todos los elementos en el espacio de trabajo.
@@ -108,6 +108,11 @@ head(Loblolly)
 library(openair)
 data(mydata)
 head(mydata)
+```
+1. Borra el fichero, asegúrate de desactivar la librería `openair` desde la ventana de 'Packages' en RStudio, y vuélvelo a cargar sin necesidad de cargar la librería `openair`.
+```{r}
+rm(mydata)
+data(mydata,package="openair")
 ```
 
 ## Tipos de datos y objetos
@@ -628,47 +633,7 @@ lapply(mydata_df,mean,na.rm=TRUE)
 
 ```
 
-### Tibbles y pipes
 
-En tibbles la aplicación de funciones se suele hacer a través de 'pipes' (librería `dplyr` en `tidyverse`).
-
-1.  Calcula cuántos datos faltantes tienes en cada columna del tibble `mydata_sel`.
-
-```{r}
-summary(mydata_sel)
-```
-
-1.  Calcula el promedio de las columnas de `mydata_sel` sin considerar los valores faltantes.
-
-```{r}
-mydata_sel %>%
-  summarise_all(funs(mean(.,na.rm=TRUE)))
-```
-
-1.  Guarda en un objeto llamado `faltantes` el número de datos faltantes en cada columna.
-
-```{r}
-faltantes = mydata_sel %>%
-  summarise_all(funs(sum(is.na(.))))
-faltantes
-```
-
-1.  Elimina los registros (filas) con algún dato faltante y guarda el nuevo objeto sin faltantes en `mydata_sel_sinna`. Verifica que ya no hay valores faltantes.
-
-```{r}
-mydata_sel_sinna=mydata_sel %>% 
-  drop_na()
-summary(mydata_sel_sinna)
-```
-
-1.  Sustituye los valores faltantes de `mydata_sel` con el promedio de valores en la columna correspondiente (primero has de cambiar a `double` las columnas `integer`). Llámalo `mydata_sel_rep`. Verifica que ya no hay valores faltantes.
-
-```{r}
-mydata_sel_rep = mydata_sel %>%
-  mutate_if(is.integer,as.double) %>%
-  replace_na(as.list(colMeans(.,na.rm=TRUE)))
-summary(mydata_sel_rep)
-```
 
 ## Referencias
 
