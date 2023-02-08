@@ -109,7 +109,9 @@ library(openair)
 data(mydata)
 head(mydata)
 ```
-1. Borra el fichero, asegúrate de desactivar la librería `openair` desde la ventana de 'Packages' en RStudio, y vuélvelo a cargar sin necesidad de cargar la librería `openair`.
+
+1.  Borra el fichero, asegúrate de desactivar la librería `openair` desde la ventana de 'Packages' en RStudio, y vuélvelo a cargar sin necesidad de cargar la librería `openair`.
+
 ```{r}
 rm(mydata)
 data(mydata,package="openair")
@@ -288,7 +290,7 @@ is.data.frame(mydata)
 
 ```{r}
 v1[2]
-v1[-2]
+v1[-2]; v1[-c(2,3)]
 v1[2]>v2[5]
 v3[v3>50]
 v3[v3==55]
@@ -298,6 +300,7 @@ which.min(v1); v1[which.min(v1)]
 which.max(v1); v1[which.max(v1)]
 v3[v3>20 & v3<80]
 v3[v3<20 | v3>80]
+set.seed(1234)
 sample(v3,3,replace=FALSE)
 which(v3 %in% c(5,35,75))
 ```
@@ -351,7 +354,7 @@ head(mydata_sel)
 head(mydata[2:4])
 ```
 
-1.  Define un data frame a partir de las columnas `ws`, `wd` y `nox`, en el tibble `mydata`, y llámalo `mydata_df`. Calcula el valor medio de cada una de las columnas. Verifica que es un data.frame.
+1.  Define un data frame a partir de las columnas `ws`, `wd` y `nox`, en el tibble `mydata`, y llámalo `mydata_df`. Verifica que es un data.frame.
 
 ```{r}
 cols=c("ws","wd","nox")
@@ -394,7 +397,7 @@ Considera las matrices A y B definidas por:
 ```{r}
 A=matrix(c(0,0.5,0.5,0.5,0,0.5,0.5,0.5,0),ncol=3,byrow=TRUE)
 B=matrix(c(0.1,0.5,0.2,0.5,0.1,1,0.5,0.5,0.2),ncol=3,byrow=TRUE)
-solve(A)
+A;B
 ```
 
 1.  Calcula la dimensión de A.
@@ -405,7 +408,7 @@ solve(A)
 6.  Eleva al cubo A.
 7.  Resuelve la ecuación Ax=I.
 8.  Resuelve la ecuación Ax=b, para b=c(1,2,3), y verifica la ecuación.
-9.  Calcula los valores y vectores propios de A. Verifica que `vect_p \cdot diag(val_p) \cdot vect_p=A`
+9.  Calcula los valores y vectores propios de A. Verifica que $vect_p \cdot diag(val_p) \cdot t(vect_p)=A$
 10. Verifica que la traza de A (suma de la diagonal) es igual a la suma de los valores propios, y que el determinante es igual al producto de estos.
 11. Calcula el rango de A sabiendo que es igual al número de valores propios distintos de cero.
 12. Extrae la matriz triangular inferior de A y también la superior.
@@ -414,6 +417,7 @@ solve(A)
 15. Sabiendo que el rango de una matriz es igual al rango de su descomposición QR, calcula el rango de A.
 
 ```{r}
+dim(A)
 A+B
 A*B
 A/B
@@ -632,8 +636,6 @@ unlist(lapply(mydata_df,mean,na.rm=TRUE))
 lapply(mydata_df,mean,na.rm=TRUE)
 
 ```
-
-
 
 ## Referencias
 

@@ -128,7 +128,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>── Attaching packages ─────────────────────────────────────── tidyverse 1.3.2 ──
-✔ ggplot2 3.4.0      ✔ purrr   1.0.0 
+✔ ggplot2 3.4.0      ✔ purrr   1.0.1 
 ✔ tibble  3.1.8      ✔ dplyr   1.0.10
 ✔ tidyr   1.2.1      ✔ stringr 1.5.0 
 ✔ readr   2.1.3      ✔ forcats 0.5.2 
@@ -833,7 +833,7 @@ Levels: a b c d</code></pre>
 </div>
 <div class="sourceCode cell-code" id="cb158"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb158-1"><a href="#cb158-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sample</span>(v3,<span class="dv">3</span>,<span class="at">replace=</span><span class="cn">FALSE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 75 45 35</code></pre>
+<pre><code>[1] 45 35 25</code></pre>
 </div>
 <div class="sourceCode cell-code" id="cb160"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb160-1"><a href="#cb160-1" aria-hidden="true" tabindex="-1"></a><span class="fu">which</span>(v3 <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">5</span>,<span class="dv">35</span>,<span class="dv">75</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
@@ -1259,13 +1259,13 @@ $vectors
 <span id="cb263-8"><a href="#cb263-8" aria-hidden="true" tabindex="-1"></a><span class="fu">resume_unif</span>(<span class="dv">10</span>,<span class="dv">1</span>,<span class="dv">2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>$suma
-[1] 16.25773
+[1] 15.40849
 
 $max
-[1] 1.959598
+[1] 1.999074
 
 $min
-[1] 1.328345</code></pre>
+[1] 1.069491</code></pre>
 </div>
 </div>
 <section id="condiciones" class="level3">
@@ -1284,7 +1284,7 @@ $min
 <span id="cb265-2"><a href="#cb265-2" aria-hidden="true" tabindex="-1"></a>x<span class="ot">=</span><span class="fu">ifelse</span>(u<span class="sc">&lt;=</span><span class="fl">0.5</span>,<span class="dv">0</span>,<span class="dv">1</span>)</span>
 <span id="cb265-3"><a href="#cb265-3" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">paste</span>(<span class="st">"Valor simulado:"</span>,<span class="fu">round</span>(u,<span class="dv">2</span>)))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Valor simulado: 0.41</code></pre>
+<pre><code>Valor simulado: 0.04</code></pre>
 </div>
 <div class="sourceCode cell-code" id="cb267"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb267-1"><a href="#cb267-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">paste</span>(<span class="st">"</span><span class="sc">\n</span><span class="st"> Valor creado:"</span>,x))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
@@ -1309,8 +1309,8 @@ $min
 <span id="cb269-11"><a href="#cb269-11" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb269-12"><a href="#cb269-12" aria-hidden="true" tabindex="-1"></a><span class="fu">tiempo</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>La temperatura actual es de 40 grados centígrados. 
-Hoy hace calor</code></pre>
+<pre><code>La temperatura actual es de 18 grados centígrados. 
+Hoy está agradable</code></pre>
 </div>
 </div>
 <ol type="1">
@@ -1325,7 +1325,7 @@ Hoy hace calor</code></pre>
 <span id="cb271-6"><a href="#cb271-6" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb271-7"><a href="#cb271-7" aria-hidden="true" tabindex="-1"></a><span class="fu">simulador_3cat</span>(<span class="dv">10</span>,<span class="fu">c</span>(<span class="fl">0.3</span>,<span class="fl">0.6</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code> [1] 3 1 3 2 2 2 2 3 1 3</code></pre>
+<pre><code> [1] 1 1 1 2 2 2 3 1 2 3</code></pre>
 </div>
 </div>
 </section>
@@ -1377,7 +1377,7 @@ Hoy hace calor</code></pre>
 <span id="cb275-11"><a href="#cb275-11" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb275-12"><a href="#cb275-12" aria-hidden="true" tabindex="-1"></a><span class="fu">quediaeshoy_2</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Por azar llegaremos hasta el día 14
+<pre><code>Por azar llegaremos hasta el día 23
  Hoy es 1
  Hoy es 2
  Hoy es 3
@@ -1391,7 +1391,16 @@ Hoy hace calor</code></pre>
  Hoy es 11
  Hoy es 12
  Hoy es 13
- Hoy es 14</code></pre>
+ Hoy es 14
+ Hoy es 15
+ Hoy es 16
+ Hoy es 17
+ Hoy es 18
+ Hoy es 19
+ Hoy es 20
+ Hoy es 21
+ Hoy es 22
+ Hoy es 23</code></pre>
 </div>
 </div>
 <ol type="1">
@@ -1416,7 +1425,7 @@ Hoy hace calor</code></pre>
 <span id="cb277-16"><a href="#cb277-16" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb277-17"><a href="#cb277-17" aria-hidden="true" tabindex="-1"></a><span class="fu">quediaeshoy_3</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Por azar llegaremos hasta el día 20 si es menor a 10.
+<pre><code>Por azar llegaremos hasta el día 22 si es menor a 10.
  Hoy es 1
  Hoy es 2
  Hoy es 3
@@ -1448,32 +1457,10 @@ Hoy hace calor</code></pre>
 <span id="cb279-14"><a href="#cb279-14" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb279-15"><a href="#cb279-15" aria-hidden="true" tabindex="-1"></a><span class="fu">quediaeshoy_4</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Por azar llegaremos hasta el día 26 saltando el 10.
+<pre><code>Por azar llegaremos hasta el día 3 saltando el 10.
  Hoy es 1
  Hoy es 2
- Hoy es 3
- Hoy es 4
- Hoy es 5
- Hoy es 6
- Hoy es 7
- Hoy es 8
- Hoy es 9
- Hoy es 11
- Hoy es 12
- Hoy es 13
- Hoy es 14
- Hoy es 15
- Hoy es 16
- Hoy es 17
- Hoy es 18
- Hoy es 19
- Hoy es 20
- Hoy es 21
- Hoy es 22
- Hoy es 23
- Hoy es 24
- Hoy es 25
- Hoy es 26</code></pre>
+ Hoy es 3</code></pre>
 </div>
 </div>
 </section>
