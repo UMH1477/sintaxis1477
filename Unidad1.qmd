@@ -1,0 +1,776 @@
+---
+title: "Unidad 1"
+author: "AMM & JM"
+format: html
+editor: visual
+---
+
+```{r}
+library(tidyverse)
+library(gridExtra)
+```
+
+## Variables aleatorias
+
+### Ejemplo 1.1 Cajas de huevos
+
+```{r,ejemplo1.1}
+# Ejemplo 1.1. Simulación de huevos defectuosos
+nsim = 200
+ncajas=144
+p=0.005
+  
+# Obtención de simulaciones Binomial (2)
+defectos_sim=rbinom(nsim,ncajas,p)
+defectos_df=data.frame(defectos=defectos_sim,cajas=144)
+g1=ggplot(defectos_df,aes(x=defectos))+
+  geom_bar(fill="skyblue")+
+  labs(x="Número de defectos",y="Nº cajas con defectos (200 muestras)")+
+  theme_minimal()
+
+g2=ggplot(defectos_df)+
+  geom_bar(aes(x=defectos,y = ..prop.., group = 1),fill="skyblue")+
+  scale_y_continuous(labels = scales::percent_format())+
+  labs(x="Número de defectos",y="Porcentaje de cajas con defectos")+
+  theme_minimal()
+
+grid.arrange(g1,g2,ncol=2)
+```
+
+### Ejemplo 1.3. Estimación MonteCarlo
+
+```{r, ej1.3}
+# Simulaciones disponibles
+defectos <- c(2, 2, 0, 0, 0, 2, 1, 2, 1, 4, 1, 0, 0, 2, 4, 0, 0, 0, 0, 1, 1, 1, 2,
+    2, 3, 1, 0, 4, 3, 1, 0, 2, 2, 2, 3, 1, 0, 2, 2, 2, 3, 1, 0, 1, 0, 1, 2, 0, 0,
+    2, 3, 2, 3, 2, 4, 4, 0, 1, 1, 3, 0, 0, 3, 2, 0, 0, 0, 3, 0, 1, 4, 1, 1, 2, 1,
+    1, 4, 1, 1, 1, 0, 1, 0, 1, 2, 2, 1, 3, 1, 2, 1, 2, 3, 1, 2, 5, 1, 1, 1, 1, 0,
+    1, 1, 1, 2, 1, 0, 0, 1, 2, 2, 1, 1, 1, 1, 0, 3, 1, 1, 1, 1, 4, 4, 0, 6, 6, 1,
+    1, 1, 0, 2, 3, 1, 0, 0, 2, 0, 2, 1, 1, 1, 2, 1, 1, 1, 1, 2, 5, 0, 1, 3, 1, 1,
+    4, 1, 2, 1, 1, 0, 2, 1, 2, 1, 3, 3, 2, 0, 3, 0, 1, 3, 0, 1, 2, 0, 1, 0, 0, 2,
+    2, 1, 2, 0, 0, 0, 1, 1, 2, 3, 1, 0, 1, 0, 1, 1, 1, 1, 1, 5, 3)
+# Número de simulaciones/observaciones
+nsim = length(defectos);nsim
+ncajas=144
+p= mean(defectos/ncajas);p
+  
+# Tamaño de la caja
+tamaño <- rep(ncajas, 200)
+# Conjunto de datos
+huevos <- data.frame(tamaño, defectos)
+```
+
+```{r}
+# Estimación MC de una probabilidad
+# Pr(X > 3)
+sel <- dplyr::filter(huevos, defectos > 3)
+prob <- nrow(sel)/nsim
+cat("Probabilidad estimada [Pr(X > 3)]: ", prob)
+
+# otro modo de seleccionar
+cat("\n Probabilidad estimada [Pr(X > 3)]: ", mean(huevos$defectos>3))
+
+# Otro modo de aproximar estimación MC con error
+defectos_mayor3=(huevos$defectos>3)*1
+estim = mean(defectos_mayor3)
+error = sd(defectos_mayor3)/nrow(huevos)
+ic_low = estim-qnorm(0.975)*error
+ic_up = estim+qnorm(0.975)*error
+cat("\n Probabilidad estimada [Pr(X > 3)]: ", round(estim,4),
+    " [",round(ic_low,4),",",round(ic_up,4),"]")
+
+```
+
+```{r}
+# Estimación MC de una media
+estim=mean(huevos$defectos)
+cat("\n Número medio de defectos por pack =",round(estim,3))
+# dispersión
+varianza=var(huevos$defectos)
+desvtip=sd(huevos$defectos)
+
+# ic para la media
+error=sqrt(sum((huevos$defectos-estim)^2)/(nsim^2))
+cat("\n Error Estimado =",round(error,3))
+# cálculo directo
+error=desvtip/sqrt(nsim);error
+
+
+# límites del IC redondeados a 3 cifras decimales
+ic_low=estim-qnorm(0.975)*error
+ic_up=estim+qnorm(0.975)*error
+cat("\n IC(95%)[AproxMC(media)]=[",ic_low,",",ic_up,"]")
+```
+
+## Función para obtener la estimación MC
+
+```{r, montecarlo}
+# Función para obtener la estimación MC
+montecarlo=function(datosim,type="mean",z=NULL,alpha=0.95){
+  # datosim es un vector con las simulaciones
+  # type="mean" -> estimar una media
+  # type="prob" -> estimar probabilidad acumulada hasta un punto z
+  # z -> Pr(x<=z), z en el espacio de estados de X
+  # alpha -> nivel de confianza (por defecto 95%)
+  nsim=length(datosim)
+  
+if(type=="mean") {
+  estim=mean(datosim)
+  error=sqrt(sum((datosim-estim)^2)/(nsim^2))
+  }
+else if(type=="prob"){
+    Iprob=(datosim<=z)*1
+    estim=mean(Iprob)
+    error=sqrt(sum((Iprob-estim)^2)/(nsim^2))
+  }
+else{
+    cat("Introduce type='mean' o type='prob'.")
+    break
+  }
+  
+ic_low=estim-qnorm((1+alpha)/2)*error
+ic_up=estim+qnorm((1+alpha)/2)*error
+cat("\n Estimación MC de una ",ifelse(type=="mean","media","probabilidad"),estim,"[",ic_low,",",ic_up,"]")
+return(data.frame(estim,error,ic_low,ic_up))
+}
+
+```
+
+```{r}
+# PRUEBA función 'montecarlo()'
+montecarlo(defectos,type="mean")
+montecarlo(defectos,type="prob",z=3)
+montecarlo(defectos)
+```
+
+### Aplicaciones MC
+
+```{r}
+# Estimación del número de estudiantes que vienen a clase por término medio
+p=14/29
+n=29
+nsim=10000
+z=rbinom(nsim,n,p)
+estim=mean(z)
+error=sd(z)/sqrt(nsim)
+ic_low=estim-qnorm(0.975)*error
+ic_up=estim+qnorm(0.975)*error
+cat("\n IC(95%)[AproxMC(",estim,")]=[",ic_low,",",ic_up,"]")
+montecarlo(z)
+```
+
+```{r}
+# Estimación de la probabilidad de que no vengan a clase más de 'nmax' alumnos
+nsim=1000000
+z=rbinom(nsim,n,p)
+nmax=5
+i_prob=(z<=nmax)*1
+estim=mean(i_prob)
+error=sd(i_prob)/sqrt(nsim)
+ic_low=estim-qnorm(0.975)*error
+ic_up=estim+qnorm(0.975)*error
+cat("\n IC(95%)[AproxMC(",estim,")]=[",ic_low,",",ic_up,"]")
+montecarlo(z)
+```
+
+## Distribuciones discretas
+
+```{r binomial}
+# D.binomial
+plot_dbinom = function(n,p){
+  x=0:n
+  datos=data.frame(x=x,prob=dbinom(x,n,p))
+  g=ggplot(datos,aes(x=x,y=prob))+
+    geom_col()+
+    theme_bw()
+  return(g)
+}
+
+n=10
+p=seq(0,1,length=5)
+g=list()
+for(i in 1:5)
+  g[[i]]=plot_dbinom(n,p[i])
+
+grid.arrange(g[[1]],g[[2]],g[[3]],g[[4]],g[[5]],ncol=3)
+```
+
+### Ejemplo 1.5.Binomial
+
+```{r, ej1.5}
+# los valores posibles de la variable Bin(1000,0.03) son
+xs <- 0:50
+n=50
+p=0.03
+# Data frame
+datos <- data.frame(xs = xs, probs = dbinom(xs, n,p), 
+                    probsacum = pbinom(xs, n,p))
+# función de masa de probabilidad
+g1 <- ggplot(datos, aes(x=xs, y=probs)) + 
+  geom_bar(stat = "identity", fill = "steelblue") +
+  ylim(0,0.5) +
+  labs(x ="x", y = "Probabilidad puntual. Pr(N=x)")
+# función de distribución
+g2 <- ggplot(datos, aes(xs, probsacum)) + 
+  geom_bar(stat = "identity", fill = "steelblue") +
+  scale_y_continuous(breaks = scales::breaks_extended(10)) +
+  labs(x ="x", y ="Probabilidad acumulada. Pr(N<=x)")
+grid.arrange(g1, g2, nrow = 1)
+
+
+# Pr(N>=3)
+nsim=1000
+n=50
+p=0.03
+# valor real de la probabilidad
+prob=1-pbinom(2,n,p)
+cat("Pr(N>=3)=",round(prob,3))
+
+# Aproximación MC para Pr(N>=3)
+set.seed(1234)
+# simulaciones
+I.a=(rbinom(nsim,n,p)>=3)*1  # función indicatriz para la probabilidad requerida
+estim=mean(I.a)
+error=sd(I.a)/sqrt(nsim)
+ic_low=estim-qnorm(0.975)*error
+ic_up=estim+qnorm(0.975)*error
+cat("\n AproxMC=",estim,"[",ic_low,",",ic_up,"]")
+```
+
+## Distribuciones continuas
+
+```{r}
+# Exponencial. Densidad
+lambda=0.05
+x=seq(0,150,1)
+datos=tibble(x,y=dexp(x,lambda))
+g1=ggplot(datos,aes(x=x,y=y))+
+  geom_line()+
+  labs(title=paste0("D.Exp(",lambda,")"))
+
+
+# Exponencial. Simulación
+lambda=0.05
+nsim=5000
+x=rexp(nsim,lambda)
+datos=tibble(x)
+g2=ggplot(datos,aes(x=x))+
+  geom_histogram(aes(y=..density..), alpha=0.5,position="identity")+
+  geom_density() +
+  labs(title=paste0("D.Exp(",lambda,")"))+
+  xlim(0,150)
+
+grid.arrange(g1,g2,ncol=2)
+```
+
+```{r gammaweibull}
+# Distribuciones Gamma y Weibull
+gamma_weib = function(alpha,beta){
+
+x=seq(0.001,10,length=1000)
+datos=tibble(x=x,gam=dgamma(x,alpha,beta),weib=dweibull(x,alpha,beta))
+ggplot(datos,aes(x=x,y=gam))+
+geom_line()+
+geom_line(aes(x=x,y=weib),color="red")
+}
+
+gamma_weib(2,5)
+```
+
+# Método transformada inversa
+
+```{r}
+# Simular de una normal
+nsim=1000
+unif=runif(nsim)
+sim=qnorm(unif)
+
+x=seq(-4,4,length=nsim)
+fdist=pnorm(x)
+datos=tibble(x,fdist,unif,sim)
+ggplot(datos,aes(x=x,y=fdist))+
+  geom_line()+
+  geom_point(aes(y=unif,x=sim),col="red")
+```
+
+## Ejemplo 1.12. Simulación de variables discretas
+
+```{r, ej1.12}
+# Ejemplo 1.12: Cajas de calzado defectuosas
+
+ncajas_mes <- 1500
+# datos uniformes
+unif <- runif(ncajas_mes)
+# Valores a devolver (piezas defectuosas por caja)
+valores <- c(0, 1, 2)
+
+# Distribución de probabilidad
+prob <- c(0.82, 0.15, 0.03)
+probacum <- cumsum(prob)
+probacum
+
+#.............................
+# (1) Simulación de un mes con un bucle
+N=c() # nº piezas defectuosas en la caja
+x=c() # beneficio de la caja
+
+for(i in 1:ncajas_mes){
+  if(unif[i]<=probacum[1]){
+    N[i]=0
+    x[i]=300
+  }
+  else if(unif[i]<probacum[2]){
+    N[i]=1
+    x[i]=-50
+  }
+  else{
+    N[i]=2
+    x[i]=-100
+  }
+} # cierra 'for'
+
+datos=tibble(p=unif,N=N,benef=x)
+datos
+
+#.............................
+#(2) Simulación de un mes con condiciones
+x=(unif<probacum[1])*300+(unif<probacum[2] & unif>probacum[1])*(-50)+
+  (unif>probacum[2])*(-100)
+N=(unif<probacum[1])*0+(unif<probacum[2] & unif>probacum[1])*(1)+
+  (unif>probacum[2])*(2)
+datos=tibble(p=unif,N=N,benef=x)
+datos
+
+#.............................
+#(3) Simulación de un mes con bucle
+N=c() # nº piezas defectuosas en la caja
+x=c() # beneficio de la caja
+
+for(i in 1:ncajas_mes){
+  N[i]=valores[min(which(probacum>=unif[i]))]
+  x[i]=ifelse(N[i]==0,300,N[i]*(-50))
+}
+
+datos=tibble(p=unif,N=N,benef=x)
+datos
+
+#.............................
+# SIMULAR j=nsim meses
+nsim=1000
+benef_mes=c()
+for(j in 1:nsim){
+  unif=runif(ncajas_mes)
+x=ifelse(unif<probacum[1],300,ifelse(unif<probacum[2],-50,-100))
+benef_mes[j]=sum(x)
+}
+montecarlo(benef_mes)
+
+# Cambio de política
+# Distribución de probabilidad
+prob <- c(0.85, 0.13, 0.02)
+probacum <- cumsum(prob)
+
+# VALOR ESPERADO TEÓRICO
+sum(prob*c(300,-50,-100))*1500
+N
+x
+datos=tibble(p=unif,N=N,benef=x)
+datos
+benef_mes=sum(x);benef_mes
+```
+
+## Simulación de mixturas discretas
+
+```{r, ej1.14}
+# Ejemplo 1.14 Tienda de electrodomésticos
+
+# (1) Simulación de clientes con árbol de probabilidad
+nsim=1500
+unif=runif(nsim)
+probs=c(0.5,0.5*0.25,0.5*0.5,0.5*0.25)
+probacum=cumsum(probs)
+probacum
+
+benef_cli=ifelse(unif<probacum[1],0,ifelse(unif<probacum[2],30,
+                                            ifelse(unif<probacum[3],60,75)))
+tipo_cli=ifelse(unif<probacum[1],"No compra","Compra")
+datos=tibble(p=unif,tipo_cli=tipo_cli,benef=benef_cli);datos
+montecarlo(benef_cli)
+
+# (2) Simulación con mixtura
+unif=runif(nsim)
+tipo_cli=cut(unif, breaks=c(0,0.5,1),labels=c("No compra","Compra"))
+
+beneficios=c(30,60,75)
+probs=c(0.25,0.5,0.25)
+probacum=cumsum(probs)
+probacum
+
+benef_cli=c()
+for(i in 1:nsim){
+  if(tipo_cli[i]=="No compra")
+    benef_cli[i]=0
+  else {
+    p=runif(1)
+    #benef_cli[i]=ifelse(p<=0.25,30,ifelse(p<=0.75,60,75))
+    benef_cli[i]=beneficios[min(which(probacum>=p))]
+  }
+}
+datos=tibble(p=unif,tipo_cli=tipo_cli,benef=benef_cli);datos
+montecarlo(benef_cli)
+```
+
+```{r}
+#Gráfica de resultados
+theme_set(
+  theme_classic() +
+    theme(legend.position = "none"))
+datos %>%
+  mutate(micro=fct_recode(as.factor(benef),"Nada"="0","Sencillo"="30","Estándar"="60","Lujo"="75"))%>%
+  group_by(micro)%>%
+  summarise(prop=n()/nrow(datos))%>%
+  mutate(percent=round(prop*100,2)) %>%
+  ggplot(aes(x=micro,y=percent))+
+  geom_col(aes(fill=micro))+
+  labs(x="Tipo de micro comprado",y="Porcentaje de compradores")+
+  geom_text(aes(label=paste0(percent,"%")), vjust=1.5,color="white")
+```
+
+## Ejemplo 1.18 Combinaciones de variables
+
+```{r, ej1.18}
+# Parámetros iniciales
+nsim <- 5000
+nvar <- 10  # número de variables
+set.seed(12)
+# Generamos matriz de datos uniformes de dimensiones nsim*nvar 
+uniforme <- matrix(runif(nsim*nvar), nrow = nsim)
+# Calculamos y_min e y_max
+ymin <- apply(uniforme, 1, min)
+ymax <- apply(uniforme, 1, max)
+# Calculamos rango
+rango <- ymax - ymin
+# Devolvemos los valores 
+simulacion <- data.frame(sim = 1:nsim, 
+                         ymin = ymin, ymax = ymax, 
+                         rango = rango)
+
+head(simulacion)
+
+#  Pr(Y_{min} <= 0.1, Y_{max} >= 0.8)$
+p1 = mean((simulacion$ymin <= 0.1) & (simulacion$ymax >= 0.8))
+cat("Pr(Y_{min} <= 0.1, Y_{max} >= 0.8)=", round(p1, 4))
+
+# Valor esperado del rango 
+cat("E(R)=",round(mean(simulacion$rango), 4))
+
+# histogramas
+orden <- c("ymin", "ymax", "rango")
+# Construimos matriz de datos para el gráfico
+datos <- pivot_longer(simulacion, cols = 2:4, 
+                      names_to = "Medida", values_to = "Valor")
+# gráfico
+ggplot(datos, aes(Valor,fill = Medida))+
+  geom_histogram(aes(y = ..density..), position = "identity", alpha = 0.3, bins = 50)+
+  labs(y = "Densidad",x = "",fill = "Variables")
+```
+
+## Ejemplo 1.19 Tuercas y pernos
+
+```{r ej1.19}
+# Parámetros iniciales
+nsim <- 5000
+set.seed(12)
+# Generamos diámetros para tuercas y pernos
+tuercas <- rnorm(nsim, 2.03, 0.02)
+pernos <- rnorm(nsim, 2.00, 0.01)
+# Calculamos la diferencia y creamos filtro de calidad
+diferencia <- tuercas - pernos
+valid<- 1*(0<diferencia & diferencia <= 0.06)
+# Devolvemos los valores 
+simulacion <- data.frame(sim = 1:nsim, 
+                         tuercas = tuercas, 
+                         pernos = pernos, 
+                         diferencia= diferencia, 
+                         valid = valid,
+                         defectos=1-valid)
+head(simulacion)
+
+# (1) Prob(encajen perno y tuerca)
+# Pr(0<T-P<=0.6)
+estim=mean(simulacion$valid)
+error=sd(simulacion$valid)/sqrt(nsim)
+estim;error
+#(2) Pernos-tuercas desechadas en un día (10000)
+estim=mean(simulacion$defectos)*10000
+error=sd(simulacion$defectos)/sqrt(nsim)*10000
+estim;error
+
+#(3) ¿Porcentaje de desechos <15%?
+estim=mean(simulacion$defectos)
+error=sd(simulacion$defectos)/sqrt(nsim)
+estim;error
+```
+
+## Modelos secuenciales
+
+### Ejemplo 1.21. Procesos secuenciados
+
+```{r ej1.21}
+# lambda_x=tasa de fallo/hora para x=A,B,C
+lambda=c(1/1000,1/333,1/167)
+# lambda_x_c=tasa de fallo/ciclo para x=A,B,C
+t=c(15.6,5.52,2.88)*7 # horas de funcionamiento por ciclo
+lambda_c=lambda*t # tasa de funcionamiento por ciclo = nº fallos por ciclo;
+lambda_c
+
+# Tiempo hasta fallo por ciclo para cada proceso
+# Tx_c ~ Exp(lambda_x_c) para x=A,B,C
+# Tiempo hasta fallo por ciclo para el proceso global
+# T_c = min{T_A_c,T_B_c,T_C_c}
+
+# Simulación
+# 1. Simular T_x_c(i) para x=A,B,C,; i=1,...,nsim
+# 2. Calcular T_c(i)=min{T_x_c(i); x=A,B,C}; i=1,...,nsim
+# 3. Aproximar por MC las medidas de interés sobre T_c
+
+nsim=5000
+# tiempo hasta fallo de cada proceso en el ciclo
+TA_c=rexp(nsim,lambda_c[1])
+TB_c=rexp(nsim,lambda_c[2])
+TC_c=rexp(nsim,lambda_c[3])
+simulaciones=tibble(TA_c,TB_c,TC_c) 
+# tiempo hasta fallo del sistema en el ciclo
+simulaciones$T_c=apply(simulaciones,1,min)
+# identificación de qué proceso genera el fallo
+simulaciones$proc=apply(simulaciones,1,which.min)
+simulaciones  
+
+simulaciones %>%
+  pivot_longer(cols=1:3,values_to = "T",names_to = "PROC")%>%
+  ggplot(aes(x=T,fill=PROC))+
+  geom_density(aes(color=PROC),alpha=0.3)+
+  #facet_wrap(vars(PROC))+
+  labs(y = "Densidad",x = "",fill = "Variables")
+
+
+ggplot(simulaciones,aes(x=T_c))+
+  geom_density(alpha=0.3)+
+  labs(title="Tiempo hasta fallo (en nº ciclos)")
+
+# Probabilidad de fallo antes de finalizar un ciclo
+# Pr(T_c<1)
+indi=(simulaciones$T_c<1)*1
+estim=sum(indi)/nsim
+error=sd(indi)/sqrt(nsim)
+ic_low=estim-qnorm(0.975)*error
+ic_up=estim+qnorm(0.975)*error
+
+estim
+ic_low
+ic_up
+
+montecarlo(simulaciones$T_c,type="prob",z=1)
+
+# Qué proceso genera más parones en un ciclo
+prop.table(table(simulaciones$proc))
+
+# Distribución de tiempo hasta fallo
+ggplot(simulaciones,aes(x=T_c))+
+  geom_density()
+
+
+
+# Tiempo óptimo para programar mantenimiento
+# Tiempo medio de funcionamiento sin fallo en un ciclo
+# E(T_c)
+montecarlo(simulaciones$T_c) # ciclos
+# x tal que es más probable un fallo (que un no fallo)
+# Pr(T_c>x)>0.50
+i=0;p=c()
+for(t in seq(0.01,5,by=0.05)){
+i=i+1
+  p[i]=1-montecarlo(simulaciones$T_c,type="prob",z=t)$estim
+}
+
+datos=data.frame(t=seq(0.01,5,by=0.05),p=p)
+min(datos$t[datos$p<0.5])
+ggplot(datos,aes(x=t,y=p))+
+  geom_point()+
+  geom_line()+
+  geom_hline(yintercept=0.5)
+```
+
+### Ejemplo 1.22. Fábrica piedra natural
+
+```{r ejemplo1.22}
+m=80;v=50
+estima.weibull=function(m,v){
+  # m=media
+  # v=varianza
+  alpha=uniroot(f=function(alpha){gamma(1+2/alpha)/gamma(1+1/alpha)^2-1-v/m^2},lower=0.1,upper=50,tol = 1e-3)$root
+  beta=m/gamma(1+1/alpha)
+return(c(alpha,beta))
+}
+
+estima.weibull(m,v)
+```
+
+```{r ejemplo1.22a}
+# SIMULACIÓN DE UN PERIODO DE 6 MESES
+# Inicializar el reloj t=0
+# Inicializar tiempo de funcionamiento sin avería a cero.
+# Inicializar tiempo de funcionamiento reducido a cero.
+# Inicializar tiempo en parada a cero.
+#
+# 1. Simular TF ~ Weib(alpha,beta) (m=80, v=50). Acumular tiempo sin avería en T. Avanzar el reloj.
+# 2. Simular tipos de avería|TF
+# 3. Simular tiempos de reparación Weib(a,b)| tipo de avería
+#     si avería == leve, acumular tiempo de funcionamiento reducido
+#     si avería != leve, acumular tiempo en parada
+# avanzar el reloj
+# Calcular el porcentaje de los tiempos acumulados.
+
+# Repetir este proceso durante varios periodos nsim de 6 meses.
+
+#---------------------
+# Realizamos todas las conversiones a minutos
+# Tiempo a fallo TF ~ Weib(alpha,beta) con media=80*60 y var=50*60^2
+# Tipo avería TA | TF ~ Discreta: TF<=1500, 1500<TF<=3000, TF>3000
+# Tiempo reparación TR|TA ~ Weib(alpha,beta) con media_TA,var_TA
+
+# parámetros weibull para TF
+tf_par=estima.weibull(80*60,50*3600)
+# cortes para tipo de avería
+cortes=c(1500,3000)
+# tipo averia
+TA=c("leve","moderado","grave")
+# probabilidades para avería|tf
+pr1=cumsum(c(0.85,0.1,0.05))
+pr2=cumsum(c(0.75,0.15,0.1))
+pr3=cumsum(c(0.65,0.2,0.15))
+
+
+# parámetros weibull para TR|TA
+tr_leve=estima.weibull(30,15)
+tr_mod=estima.weibull(60,30)
+tr_gra=estima.weibull(120,45)
+
+TSIM=60*24*30*6 # tiempo de simulación (en min)
+# Inicialización reloj y tiempos
+t=0 #reloj
+t_reducido=0
+t_pleno=0
+t_parada=0
+
+
+# simulación de 6 meses
+while(t<TSIM){
+  # tiempo de fallo
+  tf = rweibull(1,tf_par[1],tf_par[2])
+  # acumulamos tiempo de funcionamiento a pleno rendimiento hasta fallo
+  t_pleno=t_pleno+tf
+  # avanzamos el reloj
+  t=t+tf
+  # simulamos tipo de avería, dado TF
+  u=runif(1)
+  if (tf<=1500)    {ta=TA[min(which(pr1>=u))]
+  } else if (tf<=3000 & tf>1500)  {ta=TA[min(which(pr2>=u))]
+  } else  {ta=TA[min(which(pr3>=u))]}
+ 
+  # elegimos los parámetros del tpo.reparación en función de ta
+  if(ta=="leve") {tr_par=tr_leve
+  } else if(ta=="mod") {tr_par=tr_mod
+  } else tr_par=tr_gra
+  
+ # simulamos tiempo de reparación dado el tipo de avería ta
+    tr=rweibull(1,tr_par[1],tr_par[2])
+ 
+  # acumulamos tiempo de funcionamiento reducido
+    t_reducido=t_reducido+ifelse(ta=="leve",tr,0)
+  # acumulamos tiempo de funcionamiento en parada
+    t_parada=t_parada+ifelse(ta!="leve",tr,0)
+  # avanzamos el reloj con el tiempo de reparación
+    t=t+tr
+} # fin del periodo
+t_pleno/t*100
+t_parada/t*100
+t_reducido/t*100  
+```
+
+```{r ejemplo1.22b}
+# Convertimos en función la simulación anterior
+simula_nmeses = function(nmeses){
+  # parámetros weibull para TF
+tf_par=estima.weibull(80*60,50*3600)
+# cortes para tipo de avería
+cortes=c(1500,3000)
+# tipo averia
+TA=c("leve","moderado","grave")
+# probabilidades para avería|tf
+pr1=cumsum(c(0.85,0.1,0.05))
+pr2=cumsum(c(0.75,0.15,0.1))
+pr3=cumsum(c(0.65,0.2,0.15))
+
+
+# parámetros weibull para TR|TA
+tr_leve=estima.weibull(30,15)
+tr_mod=estima.weibull(60,30)
+tr_gra=estima.weibull(120,45)
+
+TSIM=60*24*30*nmeses # tiempo de simulación (en min)
+# Inicialización reloj y tiempos
+t=0 #reloj
+t_reducido=0
+t_pleno=0
+t_parada=0
+
+
+# simulación de 6 meses
+while(t<TSIM){
+  # tiempo de fallo
+  tf = rweibull(1,tf_par[1],tf_par[2])
+  # acumulamos tiempo de funcionamiento a pleno rendimiento hasta fallo
+  t_pleno=t_pleno+tf
+  # avanzamos el reloj
+  t=t+tf
+  # simulamos tipo de avería, dado TF
+  u=runif(1)
+  if (tf<=1500)    {ta=TA[min(which(pr1>=u))]
+  } else if (tf<=3000 & tf>1500)  {ta=TA[min(which(pr2>=u))]
+  } else  {ta=TA[min(which(pr3>=u))]}
+ 
+  # elegimos los parámetros del tpo.reparación en función de ta
+  if(ta=="leve") {tr_par=tr_leve
+  } else if(ta=="mod") {tr_par=tr_mod
+  } else tr_par=tr_gra
+  
+ # simulamos tiempo de reparación dado el tipo de avería ta
+    tr=rweibull(1,tr_par[1],tr_par[2])
+ 
+  # acumulamos tiempo de funcionamiento reducido
+    t_reducido=t_reducido+ifelse(ta=="leve",tr,0)
+  # acumulamos tiempo de funcionamiento en parada
+    t_parada=t_parada+ifelse(ta!="leve",tr,0)
+  # avanzamos el reloj con el tiempo de reparación
+    t=t+tr
+} # fin del periodo
+return(data.frame(t=t,pt_pleno=t_pleno/t,pt_reducido=t_reducido/t,pt_parada=t_parada/t))
+}
+```
+
+```{r ejemplo1.22c}
+# número de periodos de nmeses meses para la aprox.MC
+nsim=1000
+simulacion=data.frame(t=NA,pt_pleno=NA,pt_reducido=NA,pt_parada=NA)
+for(i in 1:nsim){
+  simulacion[i,]=simula_nmeses(6)
+}
+head(simulacion)
+
+# Estimaciones MC en términos de porcentaje de tiempo
+montecarlo(simulacion$pt_pleno*100)
+montecarlo(simulacion$pt_reducido*100)
+montecarlo(simulacion$pt_parada*100)
+
+```
